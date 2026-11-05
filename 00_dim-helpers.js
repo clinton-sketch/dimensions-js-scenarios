@@ -115,10 +115,19 @@
     var out = [];
     if (!blk || /^(TD|TH|TR|TBODY|THEAD|LABEL)$/.test(blk.tagName)) return out;
     if (!blk.parentElement || /^(FORM|BODY)$/.test(blk.parentElement.tagName)) return out;
+    var gotText = false;
+    function is(el, cls) { return el.classList.contains(cls) || !!el.querySelector('.' + cls); }
     for (var s = blk.previousElementSibling; s; s = s.previousElementSibling) {
       if (/^(SCRIPT|STYLE|LINK|MRPAGE)$/.test(s.tagName)) continue;
       if (s.classList.contains('mrBannerText') || s.querySelector('script')) continue;
       if (D.hasFields(s)) break;
+      if (is(s, 'mrQuestionText')) {
+        if (gotText) break;              /* text of the question above, e.g. an info item */
+        gotText = true;
+      } else if (gotText && !is(s, 'mrErrorText') &&
+                 (s.textContent.trim() !== '' || s.querySelector('img,video,audio,iframe'))) {
+        break;                           /* other content above this question text */
+      }
       out.unshift(s);
     }
     return out;
