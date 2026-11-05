@@ -10,8 +10,20 @@ DimJS.ready(function () {
   var D = DimJS, cells = D.inputs(CFG.q, 'text');
   if (!cells.length) return;
 
+  // Keep the % on the same line as its box: templates often give grid boxes a % width
+  // (ipsosfi.css: .mrQuestionTable .mrEdit {width:80%}), which pushes a following span
+  // onto a new line. Box and % go into one no-wrap row; the box keeps its own width.
+  D.css('djsPctCss',
+    '.djs-pct-row{display:inline-flex;align-items:center;flex-wrap:nowrap;white-space:nowrap;max-width:100%;}' +
+    '.djs-pct-row input{width:6em !important;min-width:3em;flex:0 1 auto;margin-right:0 !important;}' +
+    '.djs-pct{margin-left:8px;flex:0 0 auto;white-space:nowrap;}');
   var pct = cells.map(function (c, i) {
-    var s = D.after(c, 'djsPct' + i, 'span'); s.style.marginLeft = '8px'; return s;
+    var row = c.parentNode;
+    if (!row.classList || !row.classList.contains('djs-pct-row')) {
+      row = document.createElement('span'); row.className = 'djs-pct-row';
+      c.parentNode.insertBefore(row, c); row.appendChild(c);
+    }
+    var s = D.after(c, 'djsPct' + i, 'span', 'djs-pct'); return s;
   });
   var table = cells[cells.length - 1].closest('table') || cells[cells.length - 1];
   var total = D.after(table, 'djsQ2Total', 'div'); total.style.marginTop = '8px'; total.style.fontWeight = 'bold';

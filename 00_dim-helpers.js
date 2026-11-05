@@ -101,10 +101,36 @@
 
   // Elements to show/hide for question q: its answer block, plus its text when the
   // label contains a marker <span class="djs-q-Q3A"></span> (put it in the metadata label).
+  // The Dimensions player writes the questions of a page as loose siblings
+  // (error text, question text, <div><br/></div>, answer span) with no wrapper per
+  // question, so the answer block alone leaves the question text on screen. This also
+  // takes the field-less siblings just before the answer block, back to the previous
+  // question's fields. Banners and scripts are skipped. Grid cells and rows are left alone.
+  D.hasFields = function (node) {
+    return D.all('input,select,textarea', node).some(function (e) {
+      return e.name && e.type !== 'hidden' && !/^_[NI]/.test(e.name);
+    }) || (/^(INPUT|SELECT|TEXTAREA)$/.test(node.tagName) && node.type !== 'hidden');
+  };
+  D.lead = function (blk) {
+    var out = [];
+    if (!blk || /^(TD|TH|TR|TBODY|THEAD|LABEL)$/.test(blk.tagName)) return out;
+    if (!blk.parentElement || /^(FORM|BODY)$/.test(blk.parentElement.tagName)) return out;
+    for (var s = blk.previousElementSibling; s; s = s.previousElementSibling) {
+      if (/^(SCRIPT|STYLE|LINK|MRPAGE)$/.test(s.tagName)) continue;
+      if (s.classList.contains('mrBannerText') || s.querySelector('script')) continue;
+      if (D.hasFields(s)) break;
+      out.unshift(s);
+    }
+    return out;
+  };
+
   D.boxes = function (q) {
     var out = [], f = D.inputs(q)[0], m = document.querySelector('.djs-q-' + q);
-    if (f) out.push(D.ownBlock(f, q));
-    if (m) { var b = D.ownBlock(m, q); if (out.indexOf(b) < 0 && !(out[0] && out[0].contains(b))) out.push(b); }
+    function add(el) {
+      if (el && out.indexOf(el) < 0 && !out.some(function (o) { return o.contains(el); })) out.push(el);
+    }
+    if (f) { var blk = D.ownBlock(f, q); D.lead(blk).forEach(add); add(blk); }
+    if (m) add(D.ownBlock(m, q));
     return out;
   };
 

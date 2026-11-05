@@ -5,7 +5,10 @@
            in the Q3A text so the question text hides with it.
    Routing: Q3A_More / Q3A_Fewer MustAnswer = False and a validation function: if Q3 = {_1}
            exactly one of More/Fewer is answered; after the ask set both to NULL when Q3 <> {_1}.
-   Banner: Block_Q3.Banners.AddNew("Q3A_Show", "<script>...</script>") */
+   Banner: on Q3 (the first question of the page), added before the page ask, removed after:
+           Q3.Banners.AddNew("R03_Q3", "<script type=""text/javascript"" src=""<link>""></script>")
+   Hiding: the player writes page questions as loose siblings, so DimJS.boxes hides each
+           follow-up's text and answer box together (needs the 05-Nov fix in 00_dim-helpers.js). */
 DimJS.ready(function () {
   var CFG = { trigger: 'Q3', yes: '_1', follow: ['Q3A_More', 'Q3A_Fewer'], marker: 'Q3A' };
   var D = DimJS;
