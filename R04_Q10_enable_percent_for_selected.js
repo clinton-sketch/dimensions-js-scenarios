@@ -5,13 +5,19 @@
            so the checkbox and its % box render in the SAME table row (pairing survives randomisation).
            Other-specify text = native other / separate text question in the Other row.
    Routing: validation - Pct required only where Sel is ticked, empty where not, total = 100.
-   Banner: Q10.Banners.AddNew("Q10_Pct", "<script>...</script>") */
+   Banner: on Q10 (first question of the page), added before the page ask, removed after.
+   Metadata: every optional text/numeric box on the page (Pct, an Other-specify text question)
+           needs codes({ _NA "" NA }) as well as MustAnswer = False, or Dimensions shows
+           "Missing Answer(s)" for the blank ones. */
 DimJS.ready(function () {
-  var CFG = { q: 'Q10' };
+  // sel / pct = the loop's sub-question names. Fields are matched by name, so other boxes in the
+  // row (e.g. an Other-specify text question moved into the Other row's label) are ignored.
+  var CFG = { q: 'Q10', sel: 'Sel', pct: 'Pct' };
   var D = DimJS, rows = [];
-  D.inputs(CFG.q, 'checkbox').forEach(function (cb) {
+  function sub(el, name) { return new RegExp('_Q' + name + '(?![A-Za-z0-9])', 'i').test(D.norm(el.name)); }
+  D.inputs(CFG.q, 'checkbox').filter(function (cb) { return sub(cb, CFG.sel); }).forEach(function (cb) {
     var tr = D.row(cb);
-    var pct = tr ? D.inputs(CFG.q, 'text', tr).filter(function (t) { return !/_O/.test(t.name); })[0] : null;
+    var pct = tr ? D.inputs(CFG.q, 'text', tr).filter(function (t) { return sub(t, CFG.pct); })[0] : null;
     if (pct) rows.push({ cb: cb, pct: pct });
   });
   if (!rows.length) return;
