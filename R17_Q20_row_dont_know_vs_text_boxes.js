@@ -50,7 +50,16 @@ DimJS.ready(function () {
         cell.style.display = 'none';
       });
       var left = Array.prototype.some.call(head[r].cells, function (x) { return x.style.display !== 'none'; });
-      if (!left) head[r].style.display = 'none';
+      if (!left) {
+        /* Row now empty: cells above that span into it (corner, Name, Brand, merged DK) must
+           stop spanning it, or they take over the first data row and push it sideways. */
+        for (var p = 0; p < r; p++) {
+          Array.prototype.forEach.call(head[p].cells, function (x) {
+            if (p + x.rowSpan > r && x.rowSpan > 1) x.rowSpan -= 1;
+          });
+        }
+        head[r].style.display = 'none';
+      }
     }
   }
   var first = D.inputs(CFG.q)[0], table = first ? first.closest('table') : null;
