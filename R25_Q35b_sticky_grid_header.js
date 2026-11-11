@@ -2,7 +2,8 @@
    Survey 37 | Q35b
    CSS position:sticky does the work. If a template wrapper has overflow set (which breaks
    sticky), the JS falls back to a fixed copy of the header shown while the table is scrolled.
-   Banner: Q35b.Banners.AddNew("Q35b_Sticky", "<script>...</script>") */
+   Banner: Q35b.Banners.AddNew("R25_Q35b", "<script ... src=""<link>""></script>") before Q35b.Ask(),
+           Q35b.Banners.Remove("R25_Q35b") after. */
 DimJS.ready(function () {
   var CFG = { q: 'Q35b', top: 0, bg: '#ffffff' };
   var first = DimJS.inputs(CFG.q, 'checkbox')[0];
@@ -11,10 +12,14 @@ DimJS.ready(function () {
 
   Array.prototype.forEach.call(head.cells, function (c) {
     c.style.position = 'sticky'; c.style.top = CFG.top + 'px';
-    c.style.background = CFG.bg; c.style.zIndex = 2; c.style.boxShadow = '0 1px 0 #ccc';
+    /* keep the template's header colour; fill only see-through cells (e.g. the corner) so
+       the rows scrolling underneath do not show through */
+    var bg = getComputedStyle(c).backgroundColor;
+    if (!bg || bg === 'transparent' || /rgba\(.*,\s*0\)$/.test(bg)) c.style.background = CFG.bg;
+    c.style.zIndex = 2;
   });
 
-  // fallback: an ancestor with overflow other than visible stops sticky from working
+  /* fallback: an ancestor with overflow other than visible stops sticky from working */
   var n = table.parentElement, blocked = false;
   while (n && n !== document.body) {
     var o = getComputedStyle(n).overflowY;
