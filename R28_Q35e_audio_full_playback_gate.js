@@ -7,33 +7,43 @@
              <audio id="Q35ePlayer" controls><source src="[%ImageCacheBase%]/excerpt.mp3" type="audio/mpeg"></audio>
            Flag question on the same page: Q35d_Done / Q35e_Done text [0..1], MustAnswer = False.
    Routing: validation - flag must be "1" (also protects browsers without JS).
-   JS    : counts only the seconds actually played (seeking ahead does not count); Next appears
+   JS    : counts only the time actually played (skipping ahead does not count); Next appears
            once 98% of the media has been played. A return visit with the flag set shows Next.
-   Banner: Q35d.Banners.AddNew("Q35d_Gate", "<script>...</script>")   (CFG for Q35d)
-           Q35e.Banners.AddNew("Q35e_Gate", "<script>...</script>")   (change CFG to Q35e) */
+   Banner: on the media question (first on the page), before the page Ask, removed after:
+             Q35d.Banners.AddNew("R27_Q35d", "<script ... src=""<link>""></script>")  (this file)
+             Q35e.Banners.AddNew("R28_Q35e", "<script ... src=""<link>""></script>")  (R28 copy) */
 DimJS.ready(function () {
   var CFG = { playerId: 'Q35ePlayer', flag: 'Q35e_Done', needed: 0.98 };
-  var D = DimJS, m = document.getElementById(CFG.playerId), flag = D.flag(CFG.flag);
+  var D = DimJS, m = document.getElementById(CFG.playerId), flag = D.inputs(CFG.flag, 'text')[0] || null;
   if (!m) return;
-  if (flag && flag.value === '1') return;                 // already completed earlier
+  /* Hide only the flag's own box and its (empty) label. D.flag would hide the flag's whole
+     area, and when the flag is the only answer field on the page (the media question is an
+     info item) that area is the entire page: player, text and Next. */
+  if (flag) {
+    var box = flag.parentElement && flag.parentElement.tagName === 'SPAN' ? flag.parentElement : flag;
+    [box].concat(D.lead(box)).forEach(function (el) {
+      if (!el.contains(m) && !el.querySelector('.mrNext,[name="_NNext"]')) el.style.display = 'none';
+    });
+  }
+  if (flag && flag.value === '1') return;                 /* already completed earlier */
   D.showNext(false);
 
-  var watched = {}, last = 0;                             // whole seconds actually played
-  m.addEventListener('seeking', function () { last = m.currentTime; });
-  m.addEventListener('timeupdate', function () {
-    var t = m.currentTime;
-    if (!m.seeking && t - last >= 0 && t - last < 1.5) {
-      for (var s = Math.floor(last); s <= Math.floor(t); s++) watched[s] = 1;
-    }
-    last = t;
+  /* Seconds actually played, from the browser's own record of played ranges (m.played):
+     skipping ahead adds nothing, replaying a part does not count twice. */
+  function playedSeconds() {
+    var r = m.played, t = 0;
+    for (var k = 0; r && k < r.length; k++) t += r.end(k) - r.start(k);
+    return t;
+  }
+  function check() {
     var dur = m.duration;
-    if (dur && Object.keys(watched).length >= Math.floor(dur * CFG.needed)) done();
-  });
-  m.addEventListener('ended', function () {
-    if (m.duration && Object.keys(watched).length >= Math.floor(m.duration * CFG.needed)) done();
-  });
+    if (dur && isFinite(dur) && playedSeconds() >= dur * CFG.needed) done();
+  }
+  m.addEventListener('timeupdate', check);
+  m.addEventListener('ended', check);
+  /* capture phase: a missing file raises the error on the inner <source>, which does not bubble */
   m.addEventListener('error', function () {
     D.message(m, 'djsMediaErr', 'The media could not be loaded. Please refresh the page.');
-  });
+  }, true);
   function done() { if (flag) flag.value = '1'; D.showNext(true); }
 });
