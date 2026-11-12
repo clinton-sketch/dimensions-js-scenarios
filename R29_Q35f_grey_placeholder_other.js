@@ -43,11 +43,26 @@ DimJS.ready(function () {
   D.css('djsPh',
     '.djs-ph-wrap{position:relative;display:inline-block;vertical-align:middle;margin-left:8px}' +
     '.djs-ph-wrap input{width:16em!important;max-width:100%;box-sizing:border-box}' +
-    '.djs-ph{position:absolute;left:6px;right:6px;top:50%;transform:translateY(-50%);color:#5f5f5f;' +
-      'font-style:italic;pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}');
+    '.djs-ph{position:absolute;color:#5f5f5f;font-style:italic;pointer-events:none;' +
+      'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box}');
 
-  function sync() { tip.style.display = box.value === '' ? '' : 'none'; }
+  /* Lay the prompt exactly over the box's text area (the template adds margins/padding to
+     boxes, so fixed offsets drift outside the box). */
+  function place() {
+    var cs = getComputedStyle(box);
+    var padL = parseFloat(cs.paddingLeft) || 0, padR = parseFloat(cs.paddingRight) || 0;
+    tip.style.left = (box.offsetLeft + box.clientLeft + padL + 2) + 'px';
+    tip.style.top = (box.offsetTop + box.clientTop) + 'px';
+    tip.style.width = Math.max(0, box.clientWidth - padL - padR - 4) + 'px';
+    tip.style.height = box.clientHeight + 'px';
+    tip.style.lineHeight = box.clientHeight + 'px';
+    tip.style.fontSize = cs.fontSize;
+    tip.style.fontFamily = cs.fontFamily;
+  }
+  function sync() { place(); tip.style.display = box.value === '' ? '' : 'none'; }
   ['input', 'change', 'keyup', 'blur', 'focus'].forEach(function (ev) { box.addEventListener(ev, sync); });
+  window.addEventListener('resize', sync);
+  window.addEventListener('load', sync);
   tip.addEventListener('mousedown', function (e) { e.preventDefault(); box.focus(); });
   sync();
   /* browser autofill / back button can fill the box without an input event */
