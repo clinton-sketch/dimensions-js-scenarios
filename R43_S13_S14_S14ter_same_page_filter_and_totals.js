@@ -1,17 +1,21 @@
 /* Row 43 (scenario 42) - Conditional numeric rows and piped totals, all on ONE page
    Survey 38 | S13 -> S14 -> S14ter (rows = LstHFType: HFpEF / HFmrEF / HFrEF)
-   Setup : PageS13 = page(S13, S14, S14ter).
+   Setup : PageS13 = page(S13, S14, S14ter).  (QNR: S14 shown only if S13.1 or S13.2 > 0)
              S13    loop, _scale long [0..]                       (all rows asked)
              S14    loop, _scale long [0..] codes NA              label has <span id='djs_tot_s13'></span>
-             S14ter loop, A / B / C long codes NA                  label has <span id='djs_tot_s14'></span>
+             S14ter loop, A / B / C long codes NA                  label has <span id='djs_tot_s14'></span>,
+                    row labels "<span class='djs-s14n'></span> HFpEF patients currently treated" (S14 count written in)
            Routing: S14 / S14ter cells MustAnswer = False; PageS13.Validation.Function = "ValPageS13";
-                    after the page, cells of rows whose earlier count is 0 are set to NULL.
+                    after the page, cells of rows not shown are set to NULL; then the QNR screen-out
+                    (S13.1 + S13.2 < 3) and terminations (S14ter A < 3 / < 3 / < 2) run.
    Behaviour (live, as the respondent types):
-           - an S14 row is shown only while the matching S13 count is > 0;
+           - S14 is shown only while S13.1 or S13.2 is > 0, and then an S14 row only while the
+             matching S13 count is > 0;
              an S14ter row only while the matching S14 count is > 0;
              a question with no rows left is hidden completely (text + grid);
            - a hidden row is emptied, so it is never saved and never blocks the page;
-           - the totals of S13 and S14 are written into the S14 / S14ter question text;
+           - the totals of S13 and S14 are written into the S14 / S14ter question text, and each
+             S14 count into its S14ter row text;
            - a cell above its earlier count (S14 vs S13, S14ter column A vs S14) is outlined in red
              with a message under the grid. The server check ValPageS13 enforces the same rules.
    Banner: S13.Banners.AddNew("R43_S13", "<mrRef RefType = ""script"" src = ""js_files/R43_S13_S14_S14ter_same_page_filter_and_totals.js"" ...>")
@@ -20,8 +24,10 @@ DimJS.ready(function () {
   var CFG = {
     steps: [
       { q: 'S14', from: 'S13', fromField: '_scale', limitField: '_scale', tot: 'djs_tot_s13',
+        gate: ['_1', '_2'],                                   /* QNR: SHOW IF S13.1 or S13.2 > 0 */
         msg: 'The number of treated patients cannot be more than the number of patients given in the first table.' },
       { q: 'S14ter', from: 'S14', fromField: '_scale', limitField: 'A', tot: 'djs_tot_s14',
+        pipe: '.djs-s14n',                                    /* S14 count shown in the row text */
         msg: 'The number of patients with a treatment decision cannot be more than the number of treated patients.' }
     ]
   };
@@ -59,14 +65,16 @@ DimJS.ready(function () {
   function update() {
     CFG.steps.forEach(function (s) {
       var src = all[s.from], c = all[s.q], shown = 0, over = false, tot = 0;
+      var open = !s.gate || s.gate.some(function (cat) { return n(src.map[cat] && src.map[cat][s.fromField]) > 0; });
       src.order.forEach(function (cat) { tot += n(src.map[cat] && src.map[cat][s.fromField]); });
       var span = document.getElementById(s.tot);
       if (span) span.textContent = String(tot);
       c.order.forEach(function (cat) {
         var limit = n(src.map[cat] && src.map[cat][s.fromField]);
         var row = c.map[cat], first = row[Object.keys(row)[0]], tr = D.row(first);
-        var on = limit > 0;
+        var on = open && limit > 0;
         if (tr) tr.style.display = on ? '' : 'none';
+        if (s.pipe && tr) D.all(s.pipe, tr).forEach(function (sp) { sp.textContent = String(limit); });
         Object.keys(row).forEach(function (f) {
           if (!on && row[f].value !== '') row[f].value = '';     /* hidden row: never saved */
           row[f].classList.remove('djs-over');
