@@ -19,7 +19,14 @@ DimJS.ready(function () {
     if (!box) return;
     var blocks = D.boxes(q);
     var cell = cb.closest('td');
-    box.style.display = 'block'; box.style.marginTop = '4px'; box.style.width = '90%';
+    /* fit inside the cell: the template adds margins/padding/border to .mrEdit, so size it with
+       border-box and no side margins, otherwise it spills into the next column */
+    box.style.display = 'block';
+    box.style.setProperty('box-sizing', 'border-box', 'important');
+    box.style.setProperty('width', '100%', 'important');
+    box.style.setProperty('max-width', '100%', 'important');
+    box.style.setProperty('margin', '4px 0 0 0', 'important');
+    cell.style.overflow = 'hidden';
     cell.appendChild(box);                                 // still inside the form -> still posted
     D.show(blocks, false);
     function sync() { box.style.display = cb.checked ? 'block' : 'none'; if (!cb.checked) box.value = ''; }
