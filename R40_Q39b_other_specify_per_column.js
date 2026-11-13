@@ -1,29 +1,29 @@
-/* Row 40 - Other-specify box beside "Other" (set up like Q10 / Q10_oth1)
+/* Row 40 - Independent Other-specify box for each column
    Survey 37 | Q39b (Morning | Afternoon | Evening, multi-select per column)
-   Setup : Q39b loop over the formats, Other row label  _96 "Other<span id='q39b_oth'></span>" fix,
-           _scale categorical [0..] {_1 Morning, _2 Afternoon, _3 Evening} (each column a multi-select)
-           Q39b_Oth1  text, style Width 6em / SingleLineEdit, codes NA, MustAnswer = False,
-           on PageQ39b after Q39b.
-           This file moves the Q39b_Oth1 box into that span (no inline JS in the label), the way
-           Q10's label moves Q10_oth1 into <span id='oth1'>. The box is always visible.
-   Routing: ValQ39b - at least one answer per column (ERR_Q39b); Other ticked in any column needs
-           the Other text (ERR_Q39b_2); Other text needs Other ticked (ERR_Q39b_3).
-   Banner: Q39b.Banners.AddNew("R40_Q39b", "<mrRef RefType = ""script"" src = ""js_files/R40_Q39b_other_specify_per_column.js"" ...>")
-           before PageQ39b.Ask(), Q39b.Banners.Remove("R40_Q39b") after. */
+   Setup : Q39b = loop over the formats (rows, last row _96 "Other" fix) with
+           _scale categorical [0..] {_1 Morning, _2 Afternoon, _3 Evening} (each column is a
+           multi-select) and three text questions Q39b_OthMor / Q39b_OthAft / Q39b_OthEve
+           (MustAnswer = False) on the same page. Same pattern as the skill's
+           "Multi-Select-per-Column Grid with Other-Specify Text Box Inside the Grid".
+   Routing: validation - each column has at least one answer; Other ticked => its text filled;
+           text without Other ticked => error.
+   JS    : moves each text box into the Other row under its column, shows it only when ticked.
+   Banner: Block_Q39b.Banners.AddNew("Q39b_Oth", "<script>...</script>") */
 DimJS.ready(function () {
-  var CFG = { otherText: 'Q39b_Oth1', slot: 'q39b_oth' };
+  var CFG = { q: 'Q39b', otherCode: '_96', texts: ['Q39b_OthMor', 'Q39b_OthAft', 'Q39b_OthEve'] };
   var D = DimJS;
-  var box = D.inputs(CFG.otherText, 'text')[0];
-  var slot = document.getElementById(CFG.slot);
-  if (!box || !slot) return;
-
-  var home = box.parentElement && box.parentElement.tagName === 'SPAN' ? box.parentElement : box;
-  var left = D.lead(home);                         /* its (empty) question text / spacers below the grid */
-  slot.appendChild(box);                           /* still inside the form -> still posted */
-  [home].concat(left).forEach(function (el) {
-    if (el !== box && !el.contains(box) && !el.querySelector('.mrNext,[name="_NNext"]')) el.style.display = 'none';
+  var others = D.inputs(CFG.q, 'checkbox').filter(function (b) { return new RegExp('_Q' + CFG.otherCode + '_').test(D.norm(b.name)); })
+                .sort(function (a, b) { return D.col(a) - D.col(b); });
+  others.forEach(function (cb, i) {
+    var q = CFG.texts[i], box = q && D.inputs(q, 'text')[0];
+    if (!box) return;
+    var blocks = D.boxes(q);
+    var cell = cb.closest('td');
+    box.style.display = 'block'; box.style.marginTop = '4px'; box.style.width = '90%';
+    cell.appendChild(box);                                 // still inside the form -> still posted
+    D.show(blocks, false);
+    function sync() { box.style.display = cb.checked ? 'block' : 'none'; if (!cb.checked) box.value = ''; }
+    cb.addEventListener('change', function () { sync(); if (cb.checked) box.focus(); });
+    sync();
   });
-  box.setAttribute('aria-label', 'Other, please specify');
-  box.addEventListener('click', function (e) { e.stopPropagation(); });
-  D.css('djsQ39bOth', '#' + CFG.slot + ' input{margin-left:8px;vertical-align:middle}');
 });
