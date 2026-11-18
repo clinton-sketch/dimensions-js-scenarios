@@ -1,0 +1,40 @@
+/* Row 47 (scenario 46) - Date of HF diagnosis as mm/yyyy
+   Survey 38 | Patient Record Form, P3 (feedback rows 11 and 25: month and YEAR, styled __/____)
+   Setup : PRF loop fields P3M long [1 .. 12] and P3Y long [1900 .. 2100] (label has <span class='djs-q-P3Y'></span>).
+   Behaviour: the year box is moved next to the month box as  [mm] / [yyyy]  and its own question
+           text is hidden; digits only (2 for the month, 4 for the year). When both are filled, a
+           date after the current month is flagged at once (month and year compared together, so
+           12/1993 is fine). The server check ValPRF (ERR_P3) enforces the same rule on Next.
+   Banner: PRF[..].P1.Banners.AddNew("R47_P1", "<mrRef RefType = ""script"" src = ""js_files/R47_P3_month_year_mmyyyy.js"" ...>")
+           before each PRF iteration Ask (P1 = first question of the page), removed after. */
+DimJS.ready(function () {
+  var CFG = { m: 'P3M', y: 'P3Y', msg: 'The date of diagnosis cannot be after the current month.' };
+  var D = DimJS, mm = D.inputs(CFG.m, 'text')[0], yy = D.inputs(CFG.y, 'text')[0];
+  if (!mm || !yy) return;
+  var yBlocks = D.boxes(CFG.y);                       /* year question text + answer block */
+  [[mm, 2, 'mm', '3.2em'], [yy, 4, 'yyyy', '4.6em']].forEach(function (a) {
+    var el = a[0];
+    if (el.type === 'number') el.type = 'text';
+    el.maxLength = a[1]; el.placeholder = a[2]; el.style.width = a[3];
+    el.setAttribute('inputmode', 'numeric'); el.setAttribute('autocomplete', 'off');
+    el.addEventListener('input', function () {
+      var v = el.value.replace(/[^0-9]/g, '').slice(0, a[1]);
+      if (v !== el.value) el.value = v;
+      check();
+    });
+  });
+  var sep = document.createElement('span'); sep.textContent = ' / '; sep.style.fontWeight = 'bold';
+  mm.parentNode.insertBefore(sep, mm.nextSibling);
+  sep.parentNode.insertBefore(yy, sep.nextSibling);   /* year box now sits after the month box */
+  D.show(yBlocks, false);                             /* its empty block / text are hidden */
+  yy.setAttribute('aria-label', 'Year of HF diagnosis (yyyy)');
+  mm.setAttribute('aria-label', 'Month of HF diagnosis (mm)');
+
+  var now = new Date(), nowM = now.getFullYear() * 12 + now.getMonth() + 1;
+  function check() {
+    var m = D.num(mm.value), y = D.num(yy.value);
+    var bad = !isNaN(m) && !isNaN(y) && yy.value.length === 4 && m >= 1 && m <= 12 && y * 12 + m > nowM;
+    D.message(yy, 'djs_msg_p3', bad ? CFG.msg : '');
+  }
+  check();
+});

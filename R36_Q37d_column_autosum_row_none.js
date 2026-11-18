@@ -10,6 +10,17 @@ DimJS.ready(function () {
   var D = DimJS, cells = D.inputs(CFG.q, 'text');
   if (!cells.length) return;
   var table = cells[0].closest('table');
+
+  /* None header shown once: the None column is a categorical sub-question, so the player adds a
+     second header row with its category label ("None" again). Drop that row and let the first
+     header row stand alone (cells that spanned both rows now span one). Display only. */
+  var rows = Array.prototype.slice.call(table.rows), first = -1;
+  for (var r = 0; r < rows.length; r++) { if (rows[r].querySelector('input')) { first = r; break; } }
+  if (first === 2) {
+    Array.prototype.forEach.call(rows[0].cells, function (c) { if (c.rowSpan > 1) c.rowSpan = c.rowSpan - 1; });
+    rows[1].parentNode.removeChild(rows[1]);
+  }
+
   var cols = [];
   cells.forEach(function (c) { var i = D.col(c); if (cols.indexOf(i) < 0) cols.push(i); });
   cols.sort(function (a, b) { return a - b; });
