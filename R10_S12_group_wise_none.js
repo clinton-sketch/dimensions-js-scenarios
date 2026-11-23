@@ -4,6 +4,8 @@
            question-wide in Dimensions). Fix the codes first (Other Anti-IL is uncoded; None = 8
            clashes with Q3's code 8).
    Routing: validation - a group's None cannot be combined with any other code of the same group.
+   Each box unticked by this file also gets a 'change' event, so the template (ipsosfi.js) clears
+   its blue row / tick too - otherwise the box is unticked in the data but still looks ticked.
    Banner: S12.Banners.AddNew("S12_Groups", "<script>...</script>") */
 DimJS.ready(function () {
   var CFG = {
@@ -14,15 +16,20 @@ DimJS.ready(function () {
     ]
   };
   var D = DimJS;
+  function untick(el) {
+    if (!el.checked) return;
+    el.checked = false;
+    D.fire(el, 'change');                     /* lets the template update the row's look */
+  }
   CFG.groups.forEach(function (g) {
     var none = D.cat(CFG.q, g.none);
     var items = g.items.map(function (c) { return D.cat(CFG.q, c); }).filter(Boolean);
     if (!none) return;
     none.addEventListener('change', function () {
-      if (none.checked) items.forEach(function (i) { i.checked = false; });
+      if (none.checked) items.forEach(untick);
     });
     items.forEach(function (i) {
-      i.addEventListener('change', function () { if (i.checked) none.checked = false; });
+      i.addEventListener('change', function () { if (i.checked) untick(none); });
     });
   });
 });

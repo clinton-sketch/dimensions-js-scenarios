@@ -5,7 +5,8 @@
    Routing: validation - Q10_Most <> Q10_Least.
    JS    : rebuilds them as one table  [Most o] [name] [o Least]  by MOVING the real radios
            (moved inputs are still posted), hides the original layout, and disables the same
-           item in the other column.
+           item in the other column. Error messages of the two questions (e.g. "Missing answer(s)")
+           are moved above the new table, so they stay visible when the original layout is hidden.
    Banner: Block_Q10.Banners.AddNew("Q10_MaxDiff", "<script>...</script>") */
 DimJS.ready(function () {
   var CFG = { most: 'Q10_Most', least: 'Q10_Least', head: ['Most Appealing', '', 'Least Appealing'] };
@@ -25,7 +26,25 @@ DimJS.ready(function () {
     tr.insertCell().textContent = D.label(m);
     tr.insertCell().appendChild(l);
   });
+  /* error texts sit inside / before the original blocks: keep them visible above the table */
+  var errs = [];
+  oldBlocks.forEach(function (b) {
+    (b.classList.contains('mrErrorText') ? [b] : D.all('.mrErrorText', b)).forEach(function (e) {
+      if (e.textContent.trim() && errs.indexOf(e) < 0) errs.push(e);
+    });
+  });
   D.show(oldBlocks, false);
+  var seen = {};
+  errs.forEach(function (e) {
+    var txt = e.textContent.trim();
+    if (seen[txt]) return;                    /* same text for Most and Least: show it once */
+    seen[txt] = true;
+    var box = document.createElement('div');
+    box.className = 'djs-maxdiff-err';
+    box.appendChild(e);
+    e.style.display = '';
+    t.parentNode.insertBefore(box, t);
+  });
   D.css('djsMaxDiff', '.djs-maxdiff{border-collapse:collapse;margin:8px 0}' +
     '.djs-maxdiff td,.djs-maxdiff th{border:1px solid #ccc;padding:6px 12px;text-align:center}' +
     '.djs-maxdiff td:nth-child(2){text-align:left}');

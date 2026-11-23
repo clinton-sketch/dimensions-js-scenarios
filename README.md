@@ -2,7 +2,7 @@
 
 This repo holds the JavaScript for every scenario in *Scenario List Javascript* that is feasible through JS (scenarios 1 to 84). Each scenario has its own file. Scenario n is sheet row n+1, and its file name starts with R(n+1).
 
-The working copies live with the merged test MDDs in the Drive folder *JS scenarios* (Scenario_01_to_10 ... Scenario_73_to_84), each in a `js_files` folder next to `Test_JS.mdd` and `SurveyTemplate_DA.htm`. This repo is the backup of those `js_files` folders and matches them file for file (last synced 18 Nov 2026).
+The working copies live with the merged test MDDs in the Drive folder *JS scenarios* (Scenario_01_to_10 ... Scenario_73_to_84), each in a `js_files` folder next to `Test_JS.mdd` and `SurveyTemplate_DA.htm`. This repo is the backup of those `js_files` folders and matches them file for file (last synced 23 Nov 2026).
 
 ## How to use
 
