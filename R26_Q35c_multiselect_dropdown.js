@@ -1,7 +1,8 @@
 /* Row 26 - Multi-select shown as a dropdown with checkboxes
    Survey 37 | Q35c (6 genres)
    Setup : Q35c categorical [1..] as usual. JS MOVES the real checkboxes into a dropdown panel,
-           so Dimensions still posts and restores the answers.
+           so Dimensions still posts and restores the answers. The dropdown sits outside the
+           template's phone scroll box (div.wrap), and genre names come from the answer text only.
    Banner: Q35c.Banners.AddNew("R26_Q35c", "<script ... src=""<link>""></script>") before Q35c.Ask(),
            Q35c.Banners.Remove("R26_Q35c") after. */
 DimJS.ready(function () {
@@ -28,13 +29,21 @@ DimJS.ready(function () {
   wrap.className = 'djs-ms';
   wrap.innerHTML = '<button type="button" class="djs-ms-btn" aria-haspopup="listbox"></button><div class="djs-ms-list" role="listbox"></div>';
   var anchor = oldBlock || boxes[0];
+  /* On phones the template (ipsosfi.js) puts the answer list in <div class="wrap"> (overflow:auto),
+     which would clip the open list to a tiny scroll box: place the dropdown before that box. */
+  var clip = anchor.parentNode;
+  while (clip && clip !== document.body && !(clip.classList && clip.classList.contains('wrap'))) clip = clip.parentNode;
+  if (clip && clip !== document.body && !clip.querySelector('.mrQuestionText,.mrNext,[name="_NNext"]')) anchor = clip;
   anchor.parentNode.insertBefore(wrap, anchor);
   var leftovers = boxes.map(function (b) { return b.closest('td,li') || b.parentElement; });
   var btn = wrap.firstChild, list = wrap.lastChild;
 
   boxes.forEach(function (b) {
     var row = document.createElement('label');
-    var text = D.label(b);
+    /* answer text only: on page return the template writes a tick (&#10004;) into the label's
+       .squaremark, which must not become part of the genre name */
+    var lab = D.labelEl(b), txt = lab && lab.querySelector('.mrMultipleText');
+    var text = txt ? txt.textContent.trim() : D.label(b).replace(/✔/g, '').trim();
     row.appendChild(b); row.appendChild(document.createTextNode(' ' + text));
     list.appendChild(row);
     b.addEventListener('change', paint);
