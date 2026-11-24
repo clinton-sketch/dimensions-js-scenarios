@@ -9,7 +9,8 @@
            stay visible when the year's question text is hidden (also any error text the player
            writes between the month box and the year box). While typing, a year outside 1900 - 2100
            (e.g. 0202), a year of fewer than 4 digits (on leaving the box) or a month outside 1 - 12
-           gets a message at once.
+           gets a message at once (not repeated while the value is unchanged since the page came
+           back with the server's own message).
    Banner: PRF[..].P1.Banners.AddNew("R47_P1", "<mrRef RefType = ""script"" src = ""js_files/R47_P3_month_year_mmyyyy.js"" ...>")
            before each PRF iteration Ask (P1 = first question of the page), removed after. */
 DimJS.ready(function () {
@@ -58,11 +59,13 @@ DimJS.ready(function () {
   yy.setAttribute('aria-label', 'Year of HF diagnosis (yyyy)');
   mm.setAttribute('aria-label', 'Month of HF diagnosis (mm)');
 
-  var yStart = yy.value;   /* year as it came back from the server */
+  var yStart = yy.value, mStart = mm.value;   /* as they came back from the server */
+  var pageErr = D.all('.mrErrorText').some(function (e) { return e.textContent.trim() !== ''; });
   var now = new Date(), nowM = now.getFullYear() * 12 + now.getMonth() + 1;
   function check(left) {
     var m = D.num(mm.value), y = D.num(yy.value), txt = '';
-    var mBad = mm.value !== '' && !(m >= 1 && m <= 12);
+    var mBad = mm.value !== '' && !(m >= 1 && m <= 12)
+               && !(pageErr && mm.value === mStart);   /* server's month message already shown */
     var yBad = yy.value !== '' && (yy.value.length === 4 || left) && !(y >= CFG.yMin && y <= CFG.yMax)
                && !(yErrs.length && yy.value === yStart);   /* server's own year message already shown */
     if (mBad) txt = CFG.msgMonth;
