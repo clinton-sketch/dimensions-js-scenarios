@@ -9,6 +9,8 @@
            text is hidden; digits only (2 for month, 4 for year). Complete month + year pairs are
            compared (year * 12 + month) and a message is shown under the date at once; nothing extra
            is posted. The server check ValPC1A1 (ERR_A1_1 / ERR_A1_2 / ERR_A1_3) enforces the same rules.
+           Each year's own error texts (missing / out of range) are moved under its date, so they
+           stay visible when the year's question text is hidden.
    Banner: PC1Chart[..].A1Blk.A1_1M.Banners.AddNew("R60_A1", "<mrRef RefType = ""script"" src = ""js_files/R60_R61_A1_1_A1_2_month_year_checks.js"" ...>")
            before .A1Blk.Ask() (A1_1M = first question of the page after the info texts), removed after. */
 DimJS.ready(function () {
@@ -26,6 +28,14 @@ DimJS.ready(function () {
     var mm = D.inputs(p.m, 'text')[0], yy = D.inputs(p.y, 'text')[0];
     if (!mm || !yy) return null;
     var yBlocks = D.boxes(p.y);
+    /* the year's own error texts (e.g. missing / out of range) sit in the block hidden below:
+       collect them first and show them under the date instead */
+    var yErrs = [];
+    yBlocks.forEach(function (b) {
+      (b.classList.contains('mrErrorText') ? [b] : D.all('.mrErrorText', b)).forEach(function (e) {
+        if (e.textContent.trim() && yErrs.indexOf(e) < 0) yErrs.push(e);
+      });
+    });
     [[mm, 2, 'mm', '3.2em'], [yy, 4, 'yyyy', '4.6em']].forEach(function (a) {
       var el = a[0];
       if (el.type === 'number') el.type = 'text';
@@ -41,6 +51,10 @@ DimJS.ready(function () {
     mm.parentNode.insertBefore(sep, mm.nextSibling);
     sep.parentNode.insertBefore(yy, sep.nextSibling);
     D.show(yBlocks, false);
+    if (yErrs.length) {
+      var eBox = D.after(yy, id + '_err', 'div', 'djs-year-err');
+      yErrs.forEach(function (e) { eBox.appendChild(e); e.style.display = ''; });
+    }
     mm.setAttribute('aria-label', 'Month of ' + p.label + ' (mm)');
     yy.setAttribute('aria-label', 'Year of ' + p.label + ' (yyyy)');
     return { mm: mm, yy: yy, id: id };

@@ -7,6 +7,8 @@
            ticked (emptied when unticked, so it is never saved); typing in it ticks Other.
            None unticks every other comorbidity (and empties the Other box); ticking any other
            comorbidity unticks None. The stored answers are the normal P5 / P5_Oth answers.
+           Every box unticked by this file also gets a 'change' event, so the template (ipsosfi.js)
+           clears its look too - otherwise None is unticked in the data but still looks ticked.
            Server: None is exclusive in the metadata; ValPRF (ERR_P5_Oth) checks Other + text go together.
    Banner: PRF[..].P1.Banners.AddNew("R49_P1", "<mrRef RefType = ""script"" src = ""js_files/R49_P5_none_other_specify.js"" ...>")
            before each PRF iteration Ask, removed after. */
@@ -36,7 +38,7 @@ DimJS.ready(function () {
     if (none && changed === none && none.checked) {
       boxes.forEach(function (b) { if (b !== none && b.checked) { b.checked = false; D.fire(b, 'change'); } });
     } else if (none && changed && changed !== none && changed.checked && none.checked) {
-      none.checked = false;
+      none.checked = false; D.fire(none, 'change');   /* lets the template clear None's tick / blue row */
     }
     if (txt && oth) {
       txt.style.display = oth.checked ? '' : 'none';

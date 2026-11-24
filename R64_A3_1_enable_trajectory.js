@@ -2,7 +2,8 @@
    Survey PC1 | patient chart, A3 table, A3_1 grid: column 1 'Select all that apply' (checkbox),
            columns 2-4 Worsening / Stable / Improving (radio). QNR: enable columns 2-4 only if the
            row is selected in column 1, else disabled.
-   Setup : A3Blk field A3_1 loop (9 symptoms, _9 = Other) with Sel categorical [0..1] {_1} and
+   Setup : A3Blk field A3_1 loop (9 symptoms, _9 = Other) with Sel categorical [0..] {_1} (a tick box
+           the respondent can untick - [0..1] made it a radio that could not be unticked) and
            Traj categorical [0..1] {_1 Worsening, _2 Stable, _3 Improving}; A3_1_Oth text for Other
            (label carries <span class='djs-q-A3_1_Oth'></span>); routing: all MustAnswer = False.
    Behaviour: in a row whose symptom is not selected the three radios are disabled, greyed and cleared
@@ -42,7 +43,8 @@ DimJS.ready(function () {
     order.forEach(function (k) {
       var r = rows[k], on = !!(r.sel && r.sel.checked);
       r.traj.forEach(function (t) {
-        if (!on && t.checked) t.checked = false;            /* not applicable: never saved */
+        if (!on && t.checked) { t.checked = false; D.fire(t, 'change'); }   /* not applicable: never saved;
+                                                    the event lets the template clear the cell's look */
         D.disable(t, !on);
       });
     });
