@@ -19,6 +19,8 @@
              S14 count into its S14ter row text;
            - a cell above its earlier count (S14 vs S13, S14ter column A vs S14) is outlined in red
              with a message under the grid. The server check ValPageS13 enforces the same rules.
+           - phones: each answer card is labelled from its own grid's column labels (the template
+             mixes the labels of the three grids on this page).
    Banner: S13.Banners.AddNew("R74_S13", "<mrRef RefType = ""script"" src = ""js_files/R74_S13_S14_S14ter_same_page_filter_and_totals.js"" ...>")
            before PageS13.Ask(), S13.Banners.Remove("R74_S13") after. */
 DimJS.ready(function () {
@@ -100,4 +102,26 @@ DimJS.ready(function () {
   });
   update();
   setTimeout(update, 300);   /* after the template has rebuilt the grids / browser restored values */
+
+  /* Phone card labels: the template (ipsosfi.js stackTable) collects the column labels of ALL grids
+     on the page into one list, so with three grids the S14ter cards were labelled '#' / nothing.
+     Re-label each answer cell from its OWN grid's label row; again after the template's resize
+     handler (it re-runs stackTable 500 ms after a resize). */
+  function cardLabels() {
+    Object.keys(all).forEach(function (q) {
+      var c = all[q], first = c.order.length && c.map[c.order[0]][Object.keys(c.map[c.order[0]])[0]];
+      var t = first && first.closest('table'), body = t && t.tBodies[0];
+      if (!body || !body.rows.length) return;
+      var head = Array.prototype.map.call(body.rows[0].cells, function (h) { return h.textContent.trim(); });
+      Array.prototype.forEach.call(body.rows, function (tr) {
+        Array.prototype.forEach.call(tr.cells, function (td) {
+          if (td.querySelector('input,select,textarea') && head[td.cellIndex]) td.setAttribute('data-th', head[td.cellIndex]);
+        });
+      });
+    });
+  }
+  cardLabels();
+  setTimeout(cardLabels, 300);
+  var rt;
+  window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(cardLabels, 800); });
 });

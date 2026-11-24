@@ -2,7 +2,8 @@
    Survey PC2 | patient record, treatment history table, A10 Duration of most recent treatment:
            weeks 0-52, months 0-12, years 0-10, Unknown [mutually exclusive]; do not allow 0 at all three.
    Setup : TreatBlk fields A10W long [0 .. 52], A10M long [0 .. 12], A10Y long [0 .. 10] (labels of A10M / A10Y carry
-           <span class='djs-q-A10M'></span> / djs-q-A10Y) and A10_Unk categorical [0..1] {_4 "Unknown"};
+           <span class='djs-q-A10M'></span> / djs-q-A10Y) and A10_Unk categorical [0..] {_4 "Unknown"}
+           (a tick box the respondent can untick - [0..1] made it a radio that could not be unticked);
            routing: all MustAnswer = False.
    Behaviour: the three boxes are shown on one line as  [__] weeks  [__] months  [__] years  [ ] Unknown.
            Ticking Unknown empties and disables the three boxes (disabled = not posted); unticking it enables
