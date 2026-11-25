@@ -9,6 +9,8 @@
            Ticking Unknown empties and disables the three boxes (disabled = not posted); unticking it enables
            them again (a value restored into a box on page return unticks Unknown). The three units are NOT exclusive to each other. When all three are 0 a message is shown at
            once. Digits only.
+           Only the three boxes and their unit words are greyed while locked (not Unknown). The unit
+           word 'weeks' comes from this file only (A10W's question text no longer ends with it).
            Server: ValPC2Treat (ERR_A10_UNK / ERR_A10_ZERO) enforces the same rules (a blank unit counts as 0).
    Banner: PC2PRF[..].TreatBlk.A9.Banners.AddNew("R73_A9", "<mrRef RefType = ""script"" src = ""js_files/R73_A10_duration_unknown.js"" ...>")
            before .TreatBlk.Ask() (A9 = first question of the page), removed after. */
@@ -32,6 +34,7 @@ DimJS.ready(function () {
     line.appendChild(b.el);
     var w = document.createElement('span'); w.textContent = ' ' + b.word; w.style.margin = '0 18px 0 4px';
     line.appendChild(w);
+    b.word = w;
     if (i) D.show(blocks, false);
   });
   if (unk) {
@@ -51,7 +54,9 @@ DimJS.ready(function () {
     if (unk && src === unk && unk.checked) boxes.forEach(function (b) { b.el.value = ''; });
     if (unk && src && src !== unk && src.value !== '' && unk.checked) { unk.checked = false; D.fire(unk, 'change'); }
     var on = !!(unk && unk.checked);
-    boxes.forEach(function (b) { D.disable(b.el, on); });
+    /* lock (disabled = not posted) and grey only the box and its unit word - D.disable would grey the
+       box's parent, which is now the whole line, Unknown included */
+    boxes.forEach(function (b) { b.el.disabled = on; b.el.style.opacity = b.word.style.opacity = on ? '0.45' : ''; });
     var filled = boxes.filter(function (b) { return b.el.value !== ''; });
     var allZero = !on && filled.length === boxes.length && filled.every(function (b) { return D.num(b.el.value) === 0; });
     D.message(line, 'djs_msg_a10', allZero ? CFG.zero : '');

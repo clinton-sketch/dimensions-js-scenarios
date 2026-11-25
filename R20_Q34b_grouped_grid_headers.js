@@ -8,6 +8,7 @@
    column labels (it hides that row on phones and copies its labels onto each answer card).
    On phones (same 640px cut-off as the template's card layout) the two rows are hidden - each card
    already names its column. The template's "mobile" class alone is not a phone sign: it is set on desktop too.
+   After the phone is turned sideways and back, the "mobile" class the template dropped is put back.
    Banner: Q34b.Banners.AddNew("Q34b_Head", "<script>...</script>") */
 DimJS.ready(function () {
   var CFG = { q: 'Q34b',
@@ -32,4 +33,14 @@ DimJS.ready(function () {
   table.insertBefore(thead, table.tBodies[0] || table.firstChild);
   D.css('djsGroupHead', '@media only screen and (max-width: 640px){' +
     '.mrQuestionTable.mobile > thead.djs-group-head{display:none}}');
+  /* Turning the phone: on load the template (ipsosfi.js) gives the grid its "mobile" class (phone
+     cards under 640px). When the screen gets wider its resize handler removes that class, but when
+     it gets narrow again it does not add it back, so the grid and these header rows were squeezed
+     into a desktop table on the phone. Put the class back after the template's resize handler
+     (it runs 500 ms after the last resize), as the template does on load. */
+  var rt;
+  window.addEventListener('resize', function () {
+    clearTimeout(rt);
+    rt = setTimeout(function () { if (!table.classList.contains('mobile')) table.classList.add('mobile'); }, 800);
+  });
 });

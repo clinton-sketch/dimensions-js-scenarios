@@ -10,7 +10,9 @@
            writes between the month box and the year box). While typing, a year outside 1900 - 2100
            (e.g. 0202), a year of fewer than 4 digits (on leaving the box) or a month outside 1 - 12
            gets a message at once (not repeated while the value is unchanged since the page came
-           back with the server's own message).
+           back with the server's own message). The month is checked once 2 digits are typed or on
+           leaving the box (no flash at the '0' of '05'), and the date rule is not repeated next to the
+           server's message until the date is edited.
    Banner: PRF[..].P1.Banners.AddNew("R47_P1", "<mrRef RefType = ""script"" src = ""js_files/R47_P3_month_year_mmyyyy.js"" ...>")
            before each PRF iteration Ask (P1 = first question of the page), removed after. */
 DimJS.ready(function () {
@@ -44,6 +46,7 @@ DimJS.ready(function () {
     el.addEventListener('input', function () {
       var v = el.value.replace(/[^0-9]/g, '').slice(0, a[1]);
       if (v !== el.value) el.value = v;
+      quiet = false;
       check(false);
     });
     el.addEventListener('blur', function () { check(true); });
@@ -61,16 +64,17 @@ DimJS.ready(function () {
 
   var yStart = yy.value, mStart = mm.value;   /* as they came back from the server */
   var pageErr = D.all('.mrErrorText').some(function (e) { return e.textContent.trim() !== ''; });
+  var quiet = pageErr;   /* page came back with the server's messages: no live repeats until the date is edited */
   var now = new Date(), nowM = now.getFullYear() * 12 + now.getMonth() + 1;
   function check(left) {
     var m = D.num(mm.value), y = D.num(yy.value), txt = '';
-    var mBad = mm.value !== '' && !(m >= 1 && m <= 12)
+    var mBad = mm.value !== '' && (mm.value.length === 2 || left) && !(m >= 1 && m <= 12)   /* no flash at the '0' of '05' */
                && !(pageErr && mm.value === mStart);   /* server's month message already shown */
     var yBad = yy.value !== '' && (yy.value.length === 4 || left) && !(y >= CFG.yMin && y <= CFG.yMax)
                && !(yErrs.length && yy.value === yStart);   /* server's own year message already shown */
     if (mBad) txt = CFG.msgMonth;
     else if (yBad) txt = CFG.msgYear;
-    else if (!isNaN(m) && !isNaN(y) && yy.value.length === 4 && y * 12 + m > nowM) txt = CFG.msg;
+    else if (!quiet && !isNaN(m) && !isNaN(y) && yy.value.length === 4 && y * 12 + m > nowM) txt = CFG.msg;
     D.message(yy, 'djs_msg_p3', txt);
   }
   check(yy.value !== '');

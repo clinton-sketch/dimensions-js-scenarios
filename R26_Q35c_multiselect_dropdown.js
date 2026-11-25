@@ -3,6 +3,7 @@
    Setup : Q35c categorical [1..] as usual. JS MOVES the real checkboxes into a dropdown panel,
            so Dimensions still posts and restores the answers. The dropdown sits outside the
            template's phone scroll box (div.wrap), and genre names come from the answer text only.
+           On phones the open list pushes the page down instead of covering the buttons below it.
    Banner: Q35c.Banners.AddNew("R26_Q35c", "<script ... src=""<link>""></script>") before Q35c.Ask(),
            Q35c.Banners.Remove("R26_Q35c") after. */
 DimJS.ready(function () {
@@ -23,7 +24,10 @@ DimJS.ready(function () {
     '.djs-ms-btn:after{content:"\\25BE";position:absolute;right:10px}' +
     '.djs-ms-list{display:none;position:absolute;left:0;right:0;background:#fff;border:1px solid #888;z-index:50;max-height:240px;overflow:auto}' +
     '.djs-ms.open .djs-ms-list{display:block}.djs-ms-list label{display:block;padding:5px 8px;cursor:pointer}' +
-    '.djs-ms-list label:hover{background:#eef}');
+    '.djs-ms-list label:hover{background:#eef}' +
+    /* phones: the open list pushes the page down instead of covering the buttons below it */
+    '@media only screen and (max-width: 640px){.djs-ms{display:block;min-width:0}' +
+    '.djs-ms-list{position:static;max-height:none}}');
 
   var wrap = document.createElement('div');
   wrap.className = 'djs-ms';

@@ -14,7 +14,9 @@
            writes between the month box and the year box). While typing, a year outside 1900 - 2099
            (e.g. 0202), a year of fewer than 4 digits (on leaving the box) or a month outside 1 - 12
            gets a message at once, before the date checks (not repeated while the value is unchanged
-           since the page came back with the server's own message).
+           since the page came back with the server's own message). The month is checked once 2 digits
+           are typed or on leaving the box (no flash at the '0' of '05'), and the date rules are not
+           repeated next to the server's messages until a date is edited.
    Banner: PC1Chart[..].A1Blk.A1_1M.Banners.AddNew("R60_A1", "<mrRef RefType = ""script"" src = ""js_files/R60_R61_A1_1_A1_2_month_year_checks.js"" ...>")
            before .A1Blk.Ask() (A1_1M = first question of the page after the info texts), removed after. */
 DimJS.ready(function () {
@@ -58,6 +60,7 @@ DimJS.ready(function () {
       el.addEventListener('input', function () {
         var v = el.value.replace(/[^0-9]/g, '').slice(0, a[1]);
         if (v !== el.value) el.value = v;
+        quiet = false;
         check(false);
       });
       el.addEventListener('blur', function () { check(true); });
@@ -79,6 +82,7 @@ DimJS.ready(function () {
     return isNaN(m) || isNaN(y) || m < 1 || m > 12 || p.yy.value.length !== 4 ? NaN : y * 12 + m;
   }
   var pageErr = D.all('.mrErrorText').some(function (e) { return e.textContent.trim() !== ''; });
+  var quiet = pageErr;   /* page came back with the server's messages: no live repeats until a date is edited */
   var dx = pair(CFG.dx, 'djs_msg_a1_1'), lv = pair(CFG.lv, 'djs_msg_a1_2');
   if (!dx && !lv) return;
   var now = new Date(), nNow = now.getFullYear() * 12 + now.getMonth() + 1;
@@ -87,7 +91,7 @@ DimJS.ready(function () {
      text while the year is unchanged since the page came back with it) */
   function format(p, left) {
     var m = D.num(p.mm.value), y = D.num(p.yy.value);
-    if (p.mm.value !== '' && !(m >= 1 && m <= 12)
+    if (p.mm.value !== '' && (p.mm.value.length === 2 || left) && !(m >= 1 && m <= 12)   /* no flash at the '0' of '05' */
         && !(pageErr && p.mm.value === p.mStart)) return CFG.msg.month;   /* server's month message shown */
     if (p.yy.value !== '' && (p.yy.value.length === 4 || left) && !(y >= CFG.yMin && y <= CFG.yMax)
         && !(p.hasErr && p.yy.value === p.yStart)) return CFG.msg.year;
@@ -98,6 +102,7 @@ DimJS.ready(function () {
     var fDx = dx ? format(dx, left) : '', fLv = lv ? format(lv, left) : '';
     if (fDx || (dx && dx.yy.value !== '' && !(D.num(dx.yy.value) >= CFG.yMin && D.num(dx.yy.value) <= CFG.yMax))) nDx = NaN;
     if (fLv || (lv && lv.yy.value !== '' && !(D.num(lv.yy.value) >= CFG.yMin && D.num(lv.yy.value) <= CFG.yMax))) nLv = NaN;
+    if (quiet) { nDx = NaN; nLv = NaN; }   /* the server's date messages are already shown */
     if (dx) D.message(dx.yy, dx.id, fDx || (!isNaN(nDx) && nDx > nNow - 12 ? CFG.msg.dx :
                                      !isNaN(nDx) && !isNaN(nLv) && nDx > nLv ? CFG.msg.order : ''));
     if (lv) D.message(lv.yy, lv.id, fLv || (!isNaN(nLv) && (nLv < nNow - 12 || nLv > nNow) ? CFG.msg.lv : ''));

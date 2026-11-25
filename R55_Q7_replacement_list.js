@@ -8,16 +8,19 @@
    Behaviour: Repl (question and answers) is shown only while 'in place of' is chosen; when hidden its ticks
            are removed (never saved) and when shown again the ticks set by the routing (ARNI) come back.
            ARNI is also ticked when the list opens empty after an error page (the routing tick was lost).
+           A list hidden by the routing (single treatment) is also taken out of the layout (no empty space).
            Server: ValQ7 (ERR_Q7Repl) asks for Repl when 'in place of' is chosen; routing clears it otherwise.
    Banner: Q7[..].Choice.Banners.AddNew("R55_Q7", "<mrRef RefType = ""script"" src = ""js_files/R55_Q7_replacement_list.js"" ...>")
            before each Q7 iteration Ask (Choice = first question of the page), removed after. */
 DimJS.ready(function () {
   var CFG = { choice: 'Choice', inPlace: '_2', repl: 'Repl', arni: '_3' };
   var D = DimJS, boxes = D.inputs(CFG.repl, 'checkbox');
-  /* one treatment only: the routing hides Repl (Style.Hidden -> visibility: hidden) and saves
-     nothing (no autocode) - leave it hidden and unticked */
-  if (boxes.length < 2 || getComputedStyle(boxes[0]).visibility === 'hidden') return;
   var blocks = D.boxes(CFG.repl);
+  /* one treatment only: the routing hides Repl (Style.Hidden -> visibility: hidden) and saves
+     nothing (no autocode) - leave it unticked, and take it out of the layout so its invisible
+     list does not leave a big empty space before Next */
+  if (boxes.length && getComputedStyle(boxes[0]).visibility === 'hidden') { D.show(blocks, false); return; }
+  if (boxes.length < 2) return;
   var preset = boxes.filter(function (b) { return b.defaultChecked || b.checked; });
   /* After an error the page comes back with what was posted - an empty list if it was hidden -
      so the routing's ARNI tick is gone. Repl lists only the P11 treatments, so an ARNI box on
